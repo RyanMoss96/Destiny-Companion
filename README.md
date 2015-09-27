@@ -7,4 +7,4 @@ TO DO
 
 1. Allow users to input a username to find their own account.
 2. Allow users to select a character and view it's details.
-3. Fix certain code repition
+3. Fix certain code repetition
