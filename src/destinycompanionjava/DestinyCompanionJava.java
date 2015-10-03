@@ -1,22 +1,21 @@
-/*
-*Destiny Companion by Ryan Moss 27/09/15
-*Created to gain experience in HTTP requests and JSON
-*Read the Read Me for details on work still to do.
-*/
+
 package destinycompanionjava;
 
 import java.io.IOException;
 import java.io.BufferedReader;
+import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 
 
 /**
- *
- * @author ryanmoss
+ * Destiny Companion
+ * @author Ryan Moss
+ * 
  */
 public class DestinyCompanionJava {
 
@@ -29,6 +28,7 @@ public class DestinyCompanionJava {
         
         try{
           String memberID = getMemberId();
+          System.out.println(memberID);
           getMemberDetails(memberID);
         }catch(IOException ioe){
             // Handle Exception
@@ -37,46 +37,14 @@ public class DestinyCompanionJava {
         
     }
     
-    public static String getMemberId() throws IOException {
+    private static String getMemberId() throws IOException {
         String sURL = "https://www.bungie.net/platform/destiny/2/Stats/GetMembershipIdByDisplayName/mossypne/";
-        String apiKey = "";
-        
-        URL u = new URL(sURL);
-        HttpURLConnection c;
-        
-        c = (HttpURLConnection) u.openConnection();
-        
-        
-        c.addRequestProperty("x-api-key", apiKey);
-       
-      
-        c.connect();
-        
-        
-        switch (c.getResponseCode()) {
-            case 200:
-            case 201:
-                BufferedReader br = new BufferedReader(new InputStreamReader(c.getInputStream()));
-                StringBuilder sb = new StringBuilder();
-                String line;
-                while ((line = br.readLine()) != null) {
-                    sb.append(line+"\n");
-                }
-                br.close();
-                
-                return convertMemberID(sb.toString());
-                
-                
-                
-                
-        }
-        return null;
-        
+        String memberID = httpConnect(sURL);
+        return convertMemberID(memberID);
     }
     
     private static String convertMemberID(String jsonString) {
         JSONObject jsonObj = new JSONObject(jsonString);
-        System.out.println(jsonObj.get("Response"));
         
         String memberID = jsonObj.get("Response").toString();
         return memberID;
@@ -84,28 +52,58 @@ public class DestinyCompanionJava {
     
     private static void getMemberDetails(String memberID) throws IOException {
         String sURL = "https://www.bungie.net/platform/destiny/2/Account/";
+        sURL = sURL + memberID + "/";
+        String memberDetails = httpConnect(sURL);
+        System.out.println(memberDetails);
+        System.out.println(getCharacterDetails(memberDetails));
+        
+        
+    }
+    
+    private static String getCharacterDetails(String jsonString) throws IOException
+    {
+        JSONObject jsonObj = new JSONObject(jsonString);
+        FileWriter file = new FileWriter("/Users/ryanmoss/NetBeansProjects/destinyCompanionJava/file.txt");
+        
+        JSONObject response = (JSONObject) jsonObj.getJSONObject("Response");
+        JSONObject data = (JSONObject) response.getJSONObject("data");
+        JSONArray characters = (JSONArray) data.get("characters");
+        
+        System.out.println(characters.get(0));
+        
+        try {
+           file.write(jsonObj.toString());
+ 
+        } catch (IOException e) {
+            e.printStackTrace();
+ 
+        } finally {
+            file.flush();
+            file.close();
+        }
+        JSONObject charObj = jsonObj.getJSONObject("Response");
+        
+        String character = "c";
+        return character;
+    }
+    
+    private static String httpConnect(String sURL)throws IOException{
         String apiKey = "";
         
-        sURL = sURL + memberID + "/";
+        URL url = new URL(sURL);
         
-        System.out.println(sURL);
-        
-        URL u = new URL(sURL);
-        HttpURLConnection c;
-        
-        c = (HttpURLConnection) u.openConnection();
-        
-        
-        c.addRequestProperty("x-api-key", apiKey);
+        HttpURLConnection con;
+        con = (HttpURLConnection) url.openConnection();
+        con.addRequestProperty("x-api-key", apiKey);
        
       
-        c.connect();
+        con.connect();
         
         
-        switch (c.getResponseCode()) {
+        switch (con.getResponseCode()) {
             case 200:
             case 201:
-                BufferedReader br = new BufferedReader(new InputStreamReader(c.getInputStream()));
+                BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = br.readLine()) != null) {
@@ -113,12 +111,9 @@ public class DestinyCompanionJava {
                 }
                 br.close();
                 
-                System.out.println(sb.toString());
-                
-                
-                
-                
+                return sb.toString();
+             
         }
-        
+        return null;
     }
 }
